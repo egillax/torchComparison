@@ -18,47 +18,56 @@ targets <- torch_randint(0, 2, size=c(rows), dtype=torch_float32())
 # data <- torch_tensor(numpy$load('data.npy'), dtype=torch_float32())
 # targets <- torch_tensor(numpy$load('targets.npy'), dtype=torch_float32())$squeeze()
 
-modelParamsResNet <- list('numLayers'=8L,
-                        'sizeHidden'=512L,
-                        'hiddenFactor'=2L,
-                        'residualDropout'=0.0,
-                        'hiddenDropout'=0.0,
-                        'sizeEmbedding'=256L,
-                        'catFeatures'=features)
 
-modelParamsTransformer <- list('numBlocks'=3L,
-                               'numHeads'=8,
-                               'dimToken'=64L,
-                               'dimHidden'=512L,
-                               'attDropout'=0.2,
-                               'ffnDropout'=0.1,
-                               'resDropout'=0,
-                               'catFeatures'=features)
-
-fitParamsResNet <- list('epochs'=20,
+getParams <- function(name) {
+  
+  if (name == 'ResNet') {
+      modelParams <- list('numLayers'=8L,
+                          'sizeHidden'=512L,
+                          'hiddenFactor'=2L,
+                          'residualDropout'=0.0,
+                          'hiddenDropout'=0.0,
+                          'sizeEmbedding'=256L,
+                          'catFeatures'=features)
+      fitParams <- list('epochs'=20,
                         'learningRate'=3e-4,
                         'weightDecay'=0,
                         'batchSize'=2056,
                         'posWeight'=1)
-fitParamsTransformer <- list('epochs'=10,
-                             'learningRate'=3e-4,
-                             'weightDecay'=0,
-                             'batchSize'=16,
-                             'posWeight'=1)
+      baseModel <- ResNet
+    } else {
+      modelParams <- list('numBlocks'=3L,
+                          'numHeads'=8,
+                          'dimToken'=64L,
+                          'dimHidden'=512L,
+                          'attDropout'=0.2,
+                          'ffnDropout'=0.1,
+                          'resDropout'=0,
+                          'catFeatures'=features)
+      fitParams <- list('epochs'=10,
+                        'learningRate'=3e-4,
+                        'weightDecay'=0,
+                        'batchSize'=16,
+                        'posWeight'=1)
+      baseModel <- Transformer
+    }
+      results <- list(baseModel=baseModel,
+                      modelParams=modelParams,
+                      fitParams=fitParams)
+      return(results)
+}
 
-baseModel <- Transformer
-modelParams <- modelParamsTransformer
-fitParams <- fitParamsTransformer
+params <- getParams('Transformer')
 
-
-estimator <- Estimator$new(baseModel = baseModel,
-                           modelParameters = modelParams,
-                           fitParameters = fitParams,
+estimator <- Estimator$new(baseModel = params$baseModel,
+                           modelParameters = params$modelParams,
+                           fitParameters = params$fitParams,
                            device='cuda:0')
 
 dataset <- torch::tensor_dataset(data, targets)
 
 estimator$fit(dataset)
+ 
 
 # torch::torch_manual_seed(42)
 # model <- do.call(ResNet, modelParameters)$to(device='cpu')
