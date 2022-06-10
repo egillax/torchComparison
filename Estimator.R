@@ -20,7 +20,7 @@ Estimator <- R6::R6Class(
     initialize = function(baseModel, 
                           modelParameters, 
                           fitParameters,
-                          optimizer=torchoptx::optim_adam,
+                          optimizer=torch::optim_adam,
                           criterion=torch::nn_bce_with_logits_loss,
                           scheduler=torch::lr_reduce_on_plateau,
                           device='cpu') {
